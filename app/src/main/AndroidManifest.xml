@@ -16,6 +16,12 @@
             android:exported="true"
             android:screenOrientation="landscape"
             android:configChanges="screenSize|orientation|screenLayout|navigation">
+        </activity>
+        <activity
+            android:name=".Menu"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="screenSize|orientation|screenLayout|navigation">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

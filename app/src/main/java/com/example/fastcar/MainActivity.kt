@@ -2,10 +2,6 @@ package com.example.fastcar
 
 import android.annotation.SuppressLint
 import android.graphics.Rect
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -32,20 +28,14 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.math.pow
+import androidx.core.view.isVisible
 
+@SuppressLint("ClickableViewAccessibility", "SetTextI18n")
 
-class MainActivity : AppCompatActivity(), SensorEventListener {
-
-    private var sensorManager: SensorManager? = null
-    private var accelerometer: Sensor? = null
-
-    var ax: Float = 0.0F
-    var ay: Float = 0.0F
-    var az: Float = 0.0F
+class MainActivity : AppCompatActivity(){
     lateinit var botoi: Button
     lateinit var gora: Button
     lateinit var bera: Button
@@ -56,6 +46,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     lateinit var inprimaDenda: Button
     lateinit var zenbatDenda: Button
     lateinit var zenbatErosteko: Button
+    lateinit var menua: Button
 
     lateinit var puntuakDao: UserDao
 
@@ -66,6 +57,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     lateinit var puntua3: ImageView
     lateinit var puntua4: ImageView
     lateinit var puntua5: ImageView
+    lateinit var botoiArea: View
 
     lateinit var puntuLista: Array<ImageView>
     var puntuazioa: Int = 0
@@ -79,8 +71,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     var timer2: Timer = Timer()
     var ukitzen: Boolean = false
     var direkzioa: Boolean = false
-    var prueba: Long = Date().time
-    var databasea: Datubasea_room = Datubasea_room()
+    //var prueba: Long = Date().time
+    //var databasea: Datubasea_room = Datubasea_room()
 
     @Entity
     data class Puntuak(
@@ -91,6 +83,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         @ColumnInfo(name = "inprima") val inprima: Int,
         @ColumnInfo(name = "zenbat") val zenbat: Int,
         @ColumnInfo(name = "trofeo") val trofeo: Int,
+        )
+    @Entity
+    data class Lengoaia(
+        @PrimaryKey val lengoaia: Int,
     )
     @Dao
     interface UserDao {
@@ -127,28 +123,24 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         @Query("UPDATE puntuak SET trofeo=:puntu WHERE uid=:idea")
         fun updateTrofeos(idea: Int, puntu: Int?)
 
+        @Query("UPDATE lengoaia SET lengoaia=1 WHERE lengoaia=0")
+        fun lengoaiaEs()
+        @Query("UPDATE lengoaia SET lengoaia=0 WHERE lengoaia=1")
+        fun lengoaiaEus()
+        @Query("SELECT * FROM lengoaia")
+        fun getLengoaia(): List<Lengoaia>
 
     }
-    @Database(entities = [Puntuak::class], version = 1)
+    @Database(entities = [Puntuak::class,Lengoaia::class], version = 2,exportSchema=false)
     abstract class AppDatabase : RoomDatabase() {
         abstract fun puntuakDao(): UserDao
     }
 
 
-    @SuppressLint("ClickableViewAccessibility")
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        sensorManager?.registerListener(
-            this,
-            sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-            SensorManager.SENSOR_DELAY_NORMAL
-        );
-        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -172,8 +164,34 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         puntua3 = findViewById(R.id.puntua3)
         puntua4 = findViewById(R.id.puntua4)
         puntua5 = findViewById(R.id.puntua5)
+        menua = findViewById(R.id.arrow)
+        botoiArea = findViewById(R.id.botoiArea)
+        menua.setOnClickListener {
+            if (botoiArea.isVisible){
+                botoi.visibility = View.GONE
+                inprimaDenda.visibility = View.GONE
+                denda.visibility = View.GONE
+                abiaduraDenda.visibility = View.GONE
+                botoiArea.visibility = View.GONE
 
-
+                runOnUiThread {
+                    val params = menua.layoutParams as ConstraintLayout.LayoutParams
+                    params.leftMargin = -725
+                    menua.layoutParams = params
+                }
+            }else{
+                botoi.visibility = View.VISIBLE
+                inprimaDenda.visibility = View.VISIBLE
+                denda.visibility = View.VISIBLE
+                abiaduraDenda.visibility = View.VISIBLE
+                botoiArea.visibility = View.VISIBLE
+                runOnUiThread {
+                    val params = menua.layoutParams as ConstraintLayout.LayoutParams
+                    params.leftMargin = 0
+                    menua.layoutParams = params
+                }
+            }
+        }
 
 
         botoi.setOnClickListener {
@@ -192,27 +210,26 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 inprimaDenda.text = "Inprimatzen: $inprimatzailea \n Coste: "+(100*5*1.2)
                 zenbatDenda.text = "Puntu kantitatea: $puntuKopurua \n Coste: " +(100.toDouble().pow(puntuKopurua)).toInt()
 
+            }else{
+                runOnUiThread{
+                    val params = menua.layoutParams as ConstraintLayout.LayoutParams
+                    botoi.text = params.leftMargin.toString()
+
+
+                }
             }
         }
         gora.setOnTouchListener(@SuppressLint("ClickableViewAccessibility")
         (OnTouchListener { v, event ->
             direkzioa=true
-            if (!ukitzen) {
-                ukitzen=true
-            }else{
-                ukitzen=false
-            }
+            ukitzen = !ukitzen
             false
         })
         )
         bera.setOnTouchListener(@SuppressLint("ClickableViewAccessibility")
         (OnTouchListener { v, event ->
             direkzioa=false
-            if (!ukitzen) {
-                ukitzen=true
-            }else{
-                ukitzen=false
-            }
+            ukitzen = !ukitzen
             false
         })
         )
@@ -260,8 +277,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 abiaduraDenda.text = "Abiadura: $abiadura \n Coste: "+abiadura*10
 
 
-                var aei: Long = ( Date().time - prueba)
-                abiaduraDenda.text = (aei/1000).toInt().toString()
+               /* var aei: Long = ( Date().time - prueba)
+                abiaduraDenda.text = (aei/1000).toInt().toString()*/
 
             }
         }
@@ -367,7 +384,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val db = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java, "Puntuak"
-        ).allowMainThreadQueries().build()
+        ).allowMainThreadQueries().fallbackToDestructiveMigration().build()
 
         puntuakDao = db.puntuakDao()
 
@@ -408,7 +425,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     }else{
                         inprimaDenda.text = "Inprimatzen: ezer \n Coste: 100"
                     }
-                    textua.text = "Puntuazioa: "+puntuazioa
+                    textua.text = "Puntuazioa: $puntuazioa"
                     denda.text = "Puntu balioa: $multiplikatzaile \n Coste: "+(multiplikatzaile*5*1.2).toInt().toString()
                     abiaduraDenda.text = "Abiadura: $abiadura \n Coste: "+abiadura*10
 
@@ -455,7 +472,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         }
                     zenbatDenda.text = "Puntu kantitatea: $puntuKopurua \n Coste: " + (100.toDouble().pow(puntuKopurua)).toInt()
                     if (trofeoa==0) {
-                        botoi.text = "Trofeoak: $trofeoa \n Coste: " + 100000000
+                        botoi.text = "Trofeoak: $trofeoa \n Coste: 100000000"
                     }else{
                         botoi.text = "Trofeoak: $trofeoa \n Coste: " + 200000000 * trofeoa
                     }
@@ -491,78 +508,51 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         }
     }
-
-
-    override fun onPause() {
-        super.onPause()
-        sensorManager?.unregisterListener(this)
-    }
-
-    override fun onResume() {
-        super.onResume()
-    }
-
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        Log.i("a", "e")
-    }
-
-    override fun onSensorChanged(event: SensorEvent?) {
-        // ax = event?.values!![0]
-        val x = event?.values!![0]
-        ay = event.values!![1]
-        az = event.values!![2]
-        //  Log.d("ACCEL", "Z = $ax m/s²")
-      //  botoi.text = ax.toString()
-
-
-
-    }
     fun mugitu (nora: Boolean){
         runOnUiThread {
-            var zenbat = kotxea.rotation
+            val zenbat = kotxea.rotation
             var i = 0
             var o = 0
             val params = kotxea.layoutParams as ConstraintLayout.LayoutParams
             when {
 
                 zenbat > 89 -> {
-                    o = 30+(abiadura*3)
+                    o = 25+(abiadura*2)
 
                     //  params.bottomMargin +=1
                 }
 
                 zenbat > 59 -> {
-                    o = 20+(abiadura*3)
-                    i=5+(abiadura*3)
+                    o = 15+(abiadura*2)
+                    i=5+(abiadura*2)
                     //   params.bottomMargin += 2
                 }
 
                 zenbat > 29 -> {
-                    o = 10+(abiadura*3)
-                    i=10+(abiadura*3)
+                    o = 5+(abiadura*2)
+                    i=5+(abiadura*2)
                     //  params.bottomMargin += 2
                 }
 
                 zenbat > -1 -> {
-                    i=15+(abiadura*3)
+                    i=10+(abiadura*2)
                     //   params.bottomMargin += 3
                 }
 
                 zenbat > -31 -> {
-                    i=10+(abiadura*3)
-                    o = -10-(abiadura*3)
+                    i=5+(abiadura*2)
+                    o = -5-(abiadura*2)
                     //  params.bottomMargin +=3
                 }
 
                 zenbat > -61 -> {
-                    i=5+(abiadura*3)
-                    o = -20-(abiadura*3)
+                    i=5+(abiadura*2)
+                    o = -15-(abiadura*2)
                     //  params.bottomMargin += 4
                 }
 
                 zenbat > -91 -> {
-                    o = -30-(abiadura*3)
+                    o = -25-(abiadura*2)
                     //  params.bottomMargin += 5
                 }
 
@@ -597,10 +587,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             kotxea.requestLayout()
             puntuLista.forEach {
                 if(viewsOverlap(kotxea,it)){
-                    puntuazioa+=multiplikatzaile
-                    textua.text= "Puntuazioa: "+puntuazioa
+                    puntuazioa += if (trofeoa>=2){
+                        (multiplikatzaile*2)
+                    }else{
+                        multiplikatzaile
+                    }
+                    textua.text= "Puntuazioa: $puntuazioa"
                     datubasea(1,puntuazioa)
-                    textua.text  = "Puntuazioa: "+puntuazioa
+                    textua.text  = "Puntuazioa: $puntuazioa"
 
                     val params = it.layoutParams as ConstraintLayout.LayoutParams
                     params.horizontalBias =  (1..1000).random().toFloat()/1000
@@ -619,7 +613,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         }else if(!aldea && kotxea.rotation>-90){
             kotxea.rotation -=30
         }
-        eskuin.text = kotxea.rotation.toString()
     }
 
     val task = object : TimerTask() {
@@ -632,33 +625,27 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     val task2 = object : TimerTask() {
         override fun run() {
             puntuazioa++
-            textua.text  = "Puntuazioa: "+puntuazioa
+            textua.text  = "Puntuazioa: $puntuazioa"
             datubasea(1,puntuazioa)
             Thread.sleep((1000/inprimatzailea).toLong())
         }
     }
 
-    private fun Button.setOnTouchListener(l: Boolean) {
-        if (l) {
-            ax++
-        }else{
-            ax--
-        }
-    }
+
     private fun viewsOverlap(v1: View, v2: View): Boolean {
-        val v1_coords = IntArray(2)
-        v1.getLocationOnScreen(v1_coords)
-        val v1_w = v1.getWidth()
-        val v1_h = v1.getHeight()
-        val v1_rect = Rect(v1_coords[0], v1_coords[1], v1_coords[0] + v1_w, v1_coords[1] + v1_h)
+        val v1coords = IntArray(2)
+        v1.getLocationOnScreen(v1coords)
+        val v1w = v1.width
+        val v1h = v1.height
+        val v1rect = Rect(v1coords[0], v1coords[1], v1coords[0] + v1w, v1coords[1] + v1h)
 
-        val v2_coords = IntArray(2)
-        v2.getLocationOnScreen(v2_coords)
-        val v2_w = v2.getWidth()
-        val v2_h = v2.getHeight()
-        val v2_rect = Rect(v2_coords[0], v2_coords[1], v2_coords[0] + v2_w, v2_coords[1] + v2_h)
+        val v2coords = IntArray(2)
+        v2.getLocationOnScreen(v2coords)
+        val v2w = v2.width
+        val v2h = v2.height
+        val v2rect = Rect(v2coords[0], v2coords[1], v2coords[0] + v2w, v2coords[1] + v2h)
 
-        return v1_rect.intersect(v2_rect) || v1_rect.contains(v2_rect) || v2_rect.contains(v1_rect)
+        return v1rect.intersect(v2rect) || v1rect.contains(v2rect) || v2rect.contains(v1rect)
     }
 }
 /*

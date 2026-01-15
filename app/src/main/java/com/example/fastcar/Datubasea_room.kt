@@ -1,6 +1,19 @@
 package com.example.fastcar
 
+import android.annotation.SuppressLint
+import android.graphics.Rect
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import android.view.View.OnTouchListener
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -11,9 +24,20 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.math.pow
+import androidx.core.view.isVisible
 
-class Datubasea_room {
+@SuppressLint("ClickableViewAccessibility", "SetTextI18n")
+
+class Datubasea_room : AppCompatActivity(){
     lateinit var puntuakDao: UserDao
+
 
     @Entity
     data class Puntuak(
@@ -24,6 +48,10 @@ class Datubasea_room {
         @ColumnInfo(name = "inprima") val inprima: Int,
         @ColumnInfo(name = "zenbat") val zenbat: Int,
         @ColumnInfo(name = "trofeo") val trofeo: Int,
+    )
+    @Entity
+    data class Lengoaia(
+        @PrimaryKey val lengoaia: Int,
     )
     @Dao
     interface UserDao {
@@ -60,17 +88,36 @@ class Datubasea_room {
         @Query("UPDATE puntuak SET trofeo=:puntu WHERE uid=:idea")
         fun updateTrofeos(idea: Int, puntu: Int?)
 
+        @Query("UPDATE lengoaia SET lengoaia=1 WHERE lengoaia=0")
+        fun lengoaiaEs()
+        @Query("UPDATE lengoaia SET lengoaia=0 WHERE lengoaia=1")
+        fun lengoaiaEus()
+        @Query("SELECT * FROM lengoaia")
+        fun getLengoaia(): List<Lengoaia>
 
     }
-    @Database(entities = [Puntuak::class], version = 1)
+    @Database(entities = [Puntuak::class,Lengoaia::class], version = 2,exportSchema=false)
     abstract class AppDatabase : RoomDatabase() {
         abstract fun puntuakDao(): UserDao
     }
-    fun onCreate(){
+
+
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         val db = Room.databaseBuilder(
             applicationContext,
-            MainActivity.AppDatabase::class.java, "Puntuak"
-        ).allowMainThreadQueries().build()
-    puntuakDao = db.puntuakDao()
+            AppDatabase::class.java, "Puntuak"
+        ).allowMainThreadQueries().fallbackToDestructiveMigration().build()
+        puntuakDao = db.puntuakDao()
+
     }
-    }
+
+}
+/*
+Lista de mejoras:
+mas puntos
+mas velocidad
+impresora de puntos
+Mas de un punto aparece
+ */
