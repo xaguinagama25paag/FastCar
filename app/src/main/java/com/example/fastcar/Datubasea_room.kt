@@ -1,6 +1,7 @@
 package com.example.fastcar
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
@@ -94,6 +95,9 @@ class Datubasea_room : AppCompatActivity(){
         fun lengoaiaEus()
         @Query("SELECT * FROM lengoaia")
         fun getLengoaia(): List<Lengoaia>
+        @Insert
+        fun insertLen(vararg lengoaiak: Lengoaia)
+
 
     }
     @Database(entities = [Puntuak::class,Lengoaia::class], version = 2,exportSchema=false)
@@ -105,12 +109,15 @@ class Datubasea_room : AppCompatActivity(){
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = Room.databaseBuilder(
-            applicationContext,
+
+    }
+    init {
+    }
+    fun Datubasea(context: Context): AppDatabase {
+        return Room.databaseBuilder(
+            context.applicationContext,
             AppDatabase::class.java, "Puntuak"
         ).allowMainThreadQueries().fallbackToDestructiveMigration().build()
-        puntuakDao = db.puntuakDao()
-
     }
 
 }
