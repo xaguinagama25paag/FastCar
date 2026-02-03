@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.graphics.Rect
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.View.OnTouchListener
 import android.widget.Button
@@ -27,45 +26,64 @@ import androidx.core.view.isVisible
 @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
 
 class Menu : AppCompatActivity(){
-    lateinit var botoi: Button
+    //Main
+    lateinit var maina: ConstraintLayout
+    //Mugimendu botoiak
     lateinit var gora: Button
     lateinit var bera: Button
     lateinit var eskuin: Button
     lateinit var esker: Button
+    //Mejora botoiak
     lateinit var denda: Button
     lateinit var abiaduraDenda: Button
     lateinit var inprimaDenda: Button
     lateinit var zenbatDenda: Button
+    lateinit var mundura: Button
     lateinit var zenbatErosteko: Button
+    //Mejorak erakusteko botoia
     lateinit var menua: Button
+    //datubase aldagaia
 
     lateinit var puntuakDao: Datubasea_room.UserDao
+    var datubase: Datubasea_room = Datubasea_room()
 
+    // Kotxea eta puntu kantitatearen textua
     lateinit var kotxea: ImageView
     lateinit var textua: TextView
+    // Puntuak
     lateinit var puntua: ImageView
     lateinit var puntua2: ImageView
     lateinit var puntua3: ImageView
     lateinit var puntua4: ImageView
     lateinit var puntua5: ImageView
+    //Botoien fondo haundia
     lateinit var botoiArea: View
 
+    //Puntuen lista
     lateinit var puntuLista: Array<ImageView>
+    //Puntu eta mejoren aldagaiak
     var puntuazioa: Int = 0
     var multiplikatzaile: Int = 1
     var abiadura = 1
     var inprimatzailea = 0
     var puntuKopurua = 1
-    var trofeoa = 0
+    var munduak = 0
+
+    //Asko erosten ari den edo ez
     var zenbatErosi: Boolean = false
+
+    //Mugitzeko eta inprimagailua errepikatzeko aldagaiak
     val timer: Timer = Timer()
     var timer2: Timer = Timer()
+    //Mugitzeko aldagaiak
     var ukitzen: Boolean = false
     var direkzioa: Boolean = false
-    var datubase: Datubasea_room = Datubasea_room()
+    //Fitxategiaren aldagaia
     var savefile: Int = 0
     //var prueba: Long = Date().time
     //var databasea: Datubasea_room = Datubasea_room()
+
+    //Fondoko musika eta lengoaia
     private var musika: MediaPlayer? = null
     var lengua: Int = 0
 
@@ -79,13 +97,15 @@ class Menu : AppCompatActivity(){
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-        val extras = getIntent().getExtras()
+        //Aukeratu den fitxategia lortzen du
+        val extras = intent.extras
         if (extras != null) {
             savefile = extras.getInt("savefile")
         }
 
-        botoi = findViewById(R.id.trofeoa)
+        //komponenteak definitu
+        maina = findViewById(R.id.main)
+        mundura = findViewById(R.id.trofeoa)
         gora = findViewById(R.id.gora)
         bera = findViewById(R.id.behera)
         esker = findViewById(R.id.eskuin)
@@ -104,9 +124,11 @@ class Menu : AppCompatActivity(){
         puntua5 = findViewById(R.id.puntua5)
         menua = findViewById(R.id.savefile1)
         botoiArea = findViewById(R.id.botoiArea)
+
+        //Mejoren menua desplegatzeko edo gordetzeko
         menua.setOnClickListener {
             if (botoiArea.isVisible){
-                botoi.visibility = View.GONE
+                mundura.visibility = View.GONE
                 inprimaDenda.visibility = View.GONE
                 denda.visibility = View.GONE
                 abiaduraDenda.visibility = View.GONE
@@ -118,7 +140,7 @@ class Menu : AppCompatActivity(){
                     menua.layoutParams = params
                 }
             }else{
-                botoi.visibility = View.VISIBLE
+                mundura.visibility = View.VISIBLE
                 inprimaDenda.visibility = View.VISIBLE
                 denda.visibility = View.VISIBLE
                 abiaduraDenda.visibility = View.VISIBLE
@@ -131,18 +153,25 @@ class Menu : AppCompatActivity(){
             }
         }
 
-
-        botoi.setOnClickListener {
-            if (puntuazioa>=1000*(1.15*trofeoa)){
+//Hurrengo mundura mugitzeko botoia, bakarrik funtzionatuko du beharrezko puntuak edo gehiago izatean
+//egitean, dena berriaraziko da, munduak eta inprimagailua ezik, mundua+1 egingo da eta inprimagailua munduaren balioaren zenbaki-1 izango du, eta mundu batzuetan eta aurrera betirako beste mejorak ere
+//Fondoa eta musika aldatuko da munduaren arabera
+        mundura.setOnClickListener {
+            if (puntuazioa>=1000*(1.15*munduak)){
                 puntuazioa = 0
                 multiplikatzaile = 1
+
                 abiadura = 1
                 puntuKopurua = 1
-                trofeoa++
-                inprimatzailea = trofeoa-1
-                datubasea(6,trofeoa)
+                munduak++
+                if (munduak>=4){
+                    abiadura=5
+                }
+                inprimatzailea = munduak-1
+                datubasea(6,munduak)
+
                 if (lengua==0) {
-                    botoi.text = "Trofeoak: $trofeoa \n Koste: " + 1000 * (1.15 * trofeoa)
+                    mundura.text = "Mundua: $munduak \n Koste: " + (1000 * (1.15 * munduak).toInt())
                     textua.text = "Puntuazioa: $puntuazioa"
                     denda.text =
                         "Puntu balioa: $multiplikatzaile \n Koste: " + (multiplikatzaile * 5 * 1.2).toInt()
@@ -153,7 +182,7 @@ class Menu : AppCompatActivity(){
                         "Puntu kantitatea: $puntuKopurua \n Koste: " + (100.toDouble()
                             .pow(puntuKopurua)).toInt()
                 }else{
-                    botoi.text = "Trofeos: $trofeoa \n Coste: " + 1000 * (1.15 * trofeoa)
+                    mundura.text = "Mundo: $munduak \n Coste: " + 1000 * (1.15 * munduak)
                     textua.text = "Puntuación: $puntuazioa"
                     denda.text =
                         "Valor de puntos: $multiplikatzaile \n Coste: " + (multiplikatzaile * 5 * 1.2).toInt()
@@ -163,16 +192,13 @@ class Menu : AppCompatActivity(){
                     zenbatDenda.text =
                         "Cantidad de puntos: $puntuKopurua \n Coste: " + (100.toDouble()
                             .pow(puntuKopurua)).toInt()
-                }
-            }else{
-                runOnUiThread{
-                    val params = menua.layoutParams as ConstraintLayout.LayoutParams
-                    botoi.text = params.leftMargin.toString()
 
 
                 }
+                jarriSetting()
             }
         }
+        //Aurrera mugitzeko botoia, aktiboa egongo da presionatuta dagoen bitartean
         gora.setOnTouchListener(@SuppressLint("ClickableViewAccessibility")
         (OnTouchListener { v, event ->
             direkzioa=true
@@ -180,6 +206,7 @@ class Menu : AppCompatActivity(){
             false
         })
         )
+        //Atzeraz mugitzeko botoia, aktiboa egongo da presionatuta dagoen bitartean
         bera.setOnTouchListener(@SuppressLint("ClickableViewAccessibility")
         (OnTouchListener { v, event ->
             direkzioa=false
@@ -187,12 +214,15 @@ class Menu : AppCompatActivity(){
             false
         })
         )
+        //Giratzeko funtzioak
         eskuin.setOnClickListener {
             giratu(true)
         }
         esker.setOnClickListener {
             giratu(false)
         }
+        //Puntuen balioa igotzeko botoia, bakarrik funtzionatuko du beharrezko puntuak edo gehiago izatean
+        //Egitean, puntuen balioa +1 igoko da
         denda.setOnClickListener {
             if (puntuazioa >= multiplikatzaile * 5 * 1.2) {
                 if (zenbatErosi) {
@@ -220,6 +250,8 @@ class Menu : AppCompatActivity(){
             }
 
         }
+        //Abiadura igotzeko botoia, bakarrik funtzionatuko du beharrezko puntuak edo gehiago izatean
+        //Egitean, kotxearen abiadura +1 igoko da
         abiaduraDenda.setOnClickListener {
             if (puntuazioa>=abiadura*10){
                 if (zenbatErosi) {
@@ -240,12 +272,10 @@ class Menu : AppCompatActivity(){
                     textua.text = "Puntuación: $puntuazioa"
                     abiaduraDenda.text = "Velocidad: $abiadura \n Coste: " + abiadura * 10
                 }
-
-                /* var aei: Long = ( Date().time - prueba)
-                 abiaduraDenda.text = (aei/1000).toInt().toString()*/
-
             }
         }
+        //inprimatzen ari den kantitatea igotzeko botoia, bakarrik funtzionatuko du beharrezko puntuak edo gehiago izatean
+        //Egitean, segunduro lortzen ari diren puntuen kantitatea +1 igoko da
         inprimaDenda.setOnClickListener {
             when(inprimatzailea){
                 0->{
@@ -294,6 +324,10 @@ class Menu : AppCompatActivity(){
                 }
             }
         }
+
+        //aldi berean hartzeko dauden puntuen kantitatea igotzeko botoia
+        // bakarrik funtzionatuko du beharrezko puntuak edo gehiago izatean
+        //Egitean, pantailan dauden puntu kantitatea +1 igoko da, maximoa 5 da
         zenbatDenda.setOnClickListener {
 
 
@@ -362,6 +396,8 @@ class Menu : AppCompatActivity(){
             }
 
         }
+        //Zenbat aldiz mejora bat erosteko botoia, aldi batean edo ahal den guztiaren aukera ematen du
+        //Max denean aukeratzen den mejora erosten jarraituko du dauden puntuekin, erosi ezin den harte
         zenbatErosteko.setOnClickListener {
             if (zenbatErosi){
                 zenbatErosi = false
@@ -378,27 +414,28 @@ class Menu : AppCompatActivity(){
                     zenbatErosteko.text = "Cuanto comprar: Max"
                 }            }
         }
+        //Kotxea mugitzeko coroutina batean hasten du
         timer.schedule(task, 50, 50)
 
+        //Datubasearon context lortzen
         val db = datubase.Datubasea(applicationContext)
 
         puntuakDao = db.puntuakDao()
 
+
         datubasea(0,0)
 
-        musika = MediaPlayer.create(this, R.raw.mundubat)
-
-        musika?.start()
-        musika?.isLooping = true
 
     }
 
+    //Datubasearekin operazioak egiteko funtzioa
     @OptIn(DelicateCoroutinesApi::class)
     fun datubasea(zein: Int, puntu: Int){
         GlobalScope.launch(Dispatchers.Main) {
             when(zein){
                 0->{
-                    var lengoa: List<Datubasea_room.Lengoaia> = puntuakDao.getLengoaia()
+                    //Aplikazioa hasten denean, datubasearen datuak lortzen ditu eta ezartzen ditu
+                    val lengoa: List<Datubasea_room.Lengoaia> = puntuakDao.getLengoaia()
                     lengua = lengoa.first().component1()
                     if (lengua==1){
                         eskuin.text = "Derecha"
@@ -408,7 +445,8 @@ class Menu : AppCompatActivity(){
                         zenbatErosteko.text = "Cuanto comprar: x1"
 
                     }
-                    var puntuazio: List<Datubasea_room.Puntuak> = puntuakDao.getAll()
+
+                    val puntuazio: List<Datubasea_room.Puntuak> = puntuakDao.getAll()
                     puntuazio.forEach {
                         if (it.component1()==savefile){
                             puntuazioa = it.component2()
@@ -447,8 +485,11 @@ class Menu : AppCompatActivity(){
                             }
 
                             puntuKopurua = it.component6()
-                            trofeoa = it.component7()
+                            munduak = it.component7()
+
                             puntuLista = arrayOfNulls<ImageView>(puntuKopurua) as Array<ImageView>
+
+                            //Puntuak jartzen ditu array batean
                             when(puntuKopurua){
                                 1->{
                                     puntuLista[0] = puntua
@@ -486,61 +527,107 @@ class Menu : AppCompatActivity(){
                                     puntuLista[4] = puntua5
                                 }
                             }
+
                             if (lengua ==0) {
                                 zenbatDenda.text =
                                     "Puntu kantitatea: $puntuKopurua \n Koste: " + (100.toDouble()
                                         .pow(puntuKopurua)).toInt()
-                                botoi.text =
-                                    "Trofeoak: $trofeoa \n Koste: " + 1000 * (1.15 * trofeoa)
+                                mundura.text =
+                                    "Mundua: $munduak \n Koste: " + 1000 * (1.15 * munduak)
                             }else{
                                 zenbatDenda.text =
                                     "Cantidad de puntos: $puntuKopurua \n Coste: " + (100.toDouble()
                                         .pow(puntuKopurua)).toInt()
-                                botoi.text =
-                                    "Trofeos: $trofeoa \n Coste: " + 1000 * (1.15 * trofeoa)
+                                mundura.text =
+                                    "Mundo: $munduak \n Coste: " + 1000 * (1.15 * munduak)
 
                             }
 
+
+                            jarriSetting()
 
                         }
                     }
 
                 }
+                //Datubasean puntuak gordetzeko
                 1->{
                     puntuakDao.updateUser(savefile,puntu)
                 }
+                //Datubasean multiplikatzailea gordetzeko
                 2->{
                     puntuakDao.updateMulti(savefile,puntu)
                 }
+                //Datubasean abiadura gordetzeko
                 3->{
                     puntuakDao.updateAbiadura(savefile,puntu)
                 }
+                //Datubasean inprimagailua gordetzeko
                 4->{
                     puntuakDao.updateInprima(savefile,puntu)
                 }
+                //Datubasean puntu kantitatea gordetzeko
                 5->{
                     puntuakDao.updateZenbat(savefile,puntu)
                 }
+                //Datubasean mundu aldaketa gordetzeko
                 6->{
                     puntuakDao.updateUser(savefile,0)
                     puntuakDao.updateMulti(savefile,1)
                     puntuakDao.updateAbiadura(savefile,1)
-                    puntuakDao.updateInprima(savefile,puntu)
+                    puntuakDao.updateInprima(savefile,puntu-1)
                     puntuakDao.updateZenbat(savefile,1)
                     puntuakDao.updateTrofeos(savefile,puntu)
                 }
             }
-
-            // puntuakDao.insertAll(Puntuak(uid = 1, puntuak = 2))
-
         }
     }
+
+    //Munduaren arabera, fondoaren argazkia eta musika aldatuko dira
+    fun jarriSetting(){
+        musika?.stop()
+        when(munduak){
+            1->{
+                musika = MediaPlayer.create(this, R.raw.mundu1)
+            }
+        2-> {
+            musika = MediaPlayer.create(this, R.raw.mundu2)
+            maina.setBackgroundResource(R.drawable.fondoa2)
+        }
+            3->{
+                musika = MediaPlayer.create(this, R.raw.mundu3)
+                maina.setBackgroundResource(R.drawable.fondoa3)
+                kotxea.setImageResource(R.drawable.kotxea3)
+            }
+            4->{
+                musika = MediaPlayer.create(this, R.raw.mundu4)
+                maina.setBackgroundResource(R.drawable.fondoa4)
+                kotxea.setImageResource(R.drawable.kotxea3)
+            }
+            5->{
+                musika = MediaPlayer.create(this, R.raw.mundu4)
+                maina.setBackgroundResource(R.drawable.fondoa5)
+                kotxea.setImageResource(R.drawable.kotxea2)
+            }
+            6->{
+                musika = MediaPlayer.create(this, R.raw.mundu4)
+                maina.setBackgroundResource(R.drawable.fondoa6)
+                kotxea.setImageResource(R.drawable.kotxea2)
+            }
+        }
+        musika?.start()
+        musika?.isLooping = true
+    }
+
+    //Kotxea mugitzeko funtzioa
     fun mugitu (nora: Boolean){
         runOnUiThread {
             val zenbat = kotxea.rotation
             var i = 0
             var o = 0
             val params = kotxea.layoutParams as ConstraintLayout.LayoutParams
+
+            //Rotazioaren arabera, lehenengo edo bigarren dimentsioetan gehiago edo gutxiago mugituko da
             when {
 
                 zenbat > 89 -> {
@@ -586,6 +673,7 @@ class Menu : AppCompatActivity(){
 
             }
             //kotxea.rotation +=1
+            //aurrera edo atzera mugitzen ari den ikusteko funtzioa
             if (nora) {
                 params.leftMargin +=o
 
@@ -600,6 +688,8 @@ class Menu : AppCompatActivity(){
             //abajo: bottom: -600
             //derecha: left: 2500
             //izquierda: left: -2500
+
+            //Pantailaren bordeetatik ateratzen bada, kontrako aldera mugituko da
             if (params.bottomMargin>1100){
                 params.bottomMargin = -500
             }else if (params.bottomMargin<-600){
@@ -612,9 +702,13 @@ class Menu : AppCompatActivity(){
             }
             kotxea.layoutParams = params
             kotxea.requestLayout()
+
+            //Konprobatuko du puntu bakoitzarekin ea ukitzen ari den ala ez
+            //Ukitzen ari denean, puntua emango da eta puntua beste leku batera mugituko da
+
             puntuLista.forEach {
                 if(viewsOverlap(kotxea,it)){
-                    puntuazioa += if (trofeoa>=3){
+                    puntuazioa += if (munduak>=3){
                         (multiplikatzaile*2)
                     }else{
                         multiplikatzaile
@@ -634,9 +728,8 @@ class Menu : AppCompatActivity(){
             }
         }
     }
+    //Kotxea giratzeko funtzioa
     fun giratu(aldea: Boolean){
-
-        Log.i("Bistak", viewsOverlap(kotxea,puntua).toString())
 
         if (aldea && kotxea.rotation<90) {
             kotxea.rotation +=30
@@ -645,6 +738,7 @@ class Menu : AppCompatActivity(){
         }
     }
 
+    //Kotxea etengabe mugitzeko funtzioa
     val task = object : TimerTask() {
         override fun run() {
             if (ukitzen) {
@@ -652,6 +746,8 @@ class Menu : AppCompatActivity(){
             }
         }
     }
+
+    //Inprimagailua etengabe inprimatzeko funtzioa
     val task2 = object : TimerTask() {
         override fun run() {
             puntuazioa++
@@ -665,7 +761,7 @@ class Menu : AppCompatActivity(){
         }
     }
 
-
+    //Kotxea beste puntu bat ukitzen ari den ala ez detektatzeko funtzioa
     private fun viewsOverlap(v1: View, v2: View): Boolean {
         val v1coords = IntArray(2)
         v1.getLocationOnScreen(v1coords)
@@ -682,10 +778,3 @@ class Menu : AppCompatActivity(){
         return v1rect.intersect(v2rect) || v1rect.contains(v2rect) || v2rect.contains(v1rect)
     }
 }
-/*
-Lista de mejoras:
-mas puntos
-mas velocidad
-impresora de puntos
-Mas de un punto aparece
- */

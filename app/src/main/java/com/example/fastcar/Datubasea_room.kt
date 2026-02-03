@@ -2,19 +2,8 @@ package com.example.fastcar
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
-import android.view.View
-import android.view.View.OnTouchListener
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -26,20 +15,14 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.math.pow
-import androidx.core.view.isVisible
 
 @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
 
 class Datubasea_room : AppCompatActivity(){
-    lateinit var puntuakDao: UserDao
 
 
+    //Puntuak taulan gortzen diren datuak
+    //Nota: Lehengo bertsioetan, Mundua "trofeo" deitzen zen
     @Entity
     data class Puntuak(
         @PrimaryKey val uid: Int,
@@ -50,6 +33,8 @@ class Datubasea_room : AppCompatActivity(){
         @ColumnInfo(name = "zenbat") val zenbat: Int,
         @ColumnInfo(name = "trofeo") val trofeo: Int,
     )
+
+    //Lengoaia taulan bakarrik int bat behar da
     @Entity
     data class Lengoaia(
         @PrimaryKey val lengoaia: Int,
@@ -111,8 +96,6 @@ class Datubasea_room : AppCompatActivity(){
         super.onCreate(savedInstanceState)
 
     }
-    init {
-    }
     fun Datubasea(context: Context): AppDatabase {
         return Room.databaseBuilder(
             context.applicationContext,
@@ -121,10 +104,3 @@ class Datubasea_room : AppCompatActivity(){
     }
 
 }
-/*
-Lista de mejoras:
-mas puntos
-mas velocidad
-impresora de puntos
-Mas de un punto aparece
- */

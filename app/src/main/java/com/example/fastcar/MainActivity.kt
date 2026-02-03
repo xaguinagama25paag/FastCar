@@ -20,17 +20,23 @@ import kotlinx.coroutines.runBlocking
 @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
 
 class MainActivity : AppCompatActivity() {
+
+    // partidak gordetzeko fitxategiak
     lateinit var savefileBat: Button
     lateinit var savefileBi: Button
     lateinit var savefileHiru: Button
+    //Fitxategien informazioa
     lateinit var saveTextBat: TextView
     lateinit var saveTextBi: TextView
     lateinit var saveTextHiru: TextView
+    //Lengoaia aldatzeko botoia
     lateinit var lengoaiaButton: Button
-
+    //datubasearen aldagaiak
     lateinit var puntuakDao: Datubasea_room.UserDao
     var datubase: Datubasea_room = Datubasea_room()
+    //datubasearen "boolearra", datubasean int bat bezala dagoena
     var lengua: Int = 0
+    //fondoko musika
     private var musika: MediaPlayer? = null
 
 
@@ -44,6 +50,8 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        //komponenteak definitu
         savefileBat = findViewById(R.id.savefile1)
         savefileBi = findViewById(R.id.savefile2)
         savefileHiru = findViewById(R.id.savefile3)
@@ -52,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         saveTextHiru = findViewById(R.id.saveText3)
         lengoaiaButton = findViewById(R.id.lengoaia)
 
+        //listenerrak ezarri datubasearen funtziorako
         savefileBat.setOnClickListener {
             datubasea(1)
         }
@@ -62,6 +71,7 @@ class MainActivity : AppCompatActivity() {
             datubasea(3)
         }
 
+        // Lengoaia aldatzeko botoia, beste lengoaiara aldatuko da
         lengoaiaButton.setOnClickListener {
             if (lengua==0) {
                lengua= 1
@@ -93,6 +103,7 @@ class MainActivity : AppCompatActivity() {
     fun datubasea(zein: Int) {
         GlobalScope.launch(Dispatchers.Main) {
             when (zein) {
+                //Lengoaia lortzeko
                 0 -> {
                     var lengoa: List<Datubasea_room.Lengoaia> = puntuakDao.getLengoaia()
                     if (lengoa.isEmpty()) {
@@ -106,13 +117,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 1 -> {
+                    //Lehenengo fitxategian klikatzean, partidara bidaliko du partida horrekin, datuak ez direnean existitzen lehenengo sortuko ditu partidara bidali baino lehen, bigarren eta hirugarren fitxategiarekin berdina da
                     var puntuazio: List<Datubasea_room.Puntuak> = puntuakDao.getAll()
                     if (puntuazio.isEmpty()){
                         puntuakDao.insertAll(Datubasea_room.Puntuak(1, 0, 1, 1, 0, 1, 1))
 
                     }else{
                         puntuazio = puntuakDao.getAll()
-                        var checker: Boolean = false
+                        var checker = false
                         puntuazio.forEach {
                             if (it.component1()==1){
                                 checker = true
@@ -135,7 +147,7 @@ class MainActivity : AppCompatActivity() {
 
                     }else{
                         puntuazio = puntuakDao.getAll()
-                        var checker: Boolean = false
+                        var checker = false
                         puntuazio.forEach {
                             if (it.component1()==2){
                                 checker = true
@@ -157,7 +169,7 @@ class MainActivity : AppCompatActivity() {
 
                     }else{
                         puntuazio = puntuakDao.getAll()
-                        var checker: Boolean = false
+                        var checker = false
                         puntuazio.forEach {
                             if (it.component1()==3){
                                 checker = true
@@ -171,18 +183,17 @@ class MainActivity : AppCompatActivity() {
                         mainera(3)
                     }
                 }
-
+                    // Fitxategien datuak lortzeko, existitzen den fitxategi bakoitzaren lortuko ditu eta aukeratutako hizkuntzan erakutsiko du
                 4 -> {
-                    var puntuazio: List<Datubasea_room.Puntuak> = puntuakDao.getAll()
+                    val puntuazio: List<Datubasea_room.Puntuak> = puntuakDao.getAll()
                     if (!puntuazio.isEmpty()){
-                        var check: Int = 1
+                        var check = 1
                         puntuazio.forEach {
                             if (it.component1() ==check){
-                                var textua: String
-                                if (lengua==0) {
-                                    textua = "Puntuak: ${it.component2()} \n Balioa: ${it.component3()} \n Abiadura: ${it.component3()} \n Inprimatzailea: ${it.component4()} \n Puntu kantitatea: ${it.component5()} \n Trofeoak: ${it.component6()}"
+                                val textua: String = if (lengua==0) {
+                                    "Puntuak: ${it.component2()} \n Balioa: ${it.component3()} \n Abiadura: ${it.component4()} \n Inprimatzailea: ${it.component5()} \n Puntu kantitatea: ${it.component6()} \n Mundua: ${it.component7()}"
                                 }else{
-                                    textua = "Puntos: ${it.component2()} \n Valor: ${it.component3()} \n Velocidad: ${it.component3()} \n Impresora: ${it.component4()} \n Cantidad de puntos: ${it.component5()} \n Trofeos: ${it.component6()}"
+                                    "Puntos: ${it.component2()} \n Valor: ${it.component3()} \n Velocidad: ${it.component4()} \n Impresora: ${it.component5()} \n Cantidad de puntos: ${it.component6()} \n Mundo: ${it.component7()}"
                                 }
                                     when(check){
                                     1->saveTextBat.text = textua
@@ -195,22 +206,15 @@ class MainActivity : AppCompatActivity() {
 
                     }
                 }
-
-                5 -> {
-                }
-
-                6 -> {
-                }
             }
-
-            // puntuakDao.insertAll(Puntuak(uid = 1, puntuak = 2))
-
         }
     }
+
+    //Partidara bidaltzeko funtzioa, aukeratu den fitxategiaren zenbakia gordeko du
     suspend fun mainera(savefile: Int){
         delay(1000)
         musika?.stop()
-        val switchActivityIntent: Intent = Intent(this, Menu::class.java)
+        val switchActivityIntent = Intent(this, Menu::class.java)
         switchActivityIntent.putExtra("savefile",savefile)
         startActivity(switchActivityIntent)
     }
