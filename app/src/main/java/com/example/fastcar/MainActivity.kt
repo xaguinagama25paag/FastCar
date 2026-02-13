@@ -5,9 +5,11 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -16,6 +18,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import java.util.Timer
+import java.util.TimerTask
 
 @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
 
@@ -38,6 +42,13 @@ class MainActivity : AppCompatActivity() {
     var lengua: Int = 0
     //fondoko musika
     private var musika: MediaPlayer? = null
+    lateinit var fondoKotxea: ImageView
+    val timer: Timer = Timer()
+    var checker: Boolean = false
+    var zenbat =0
+    var non = 0
+    var altura = 0
+
 
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -59,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         saveTextBi = findViewById(R.id.saveText2)
         saveTextHiru = findViewById(R.id.saveText3)
         lengoaiaButton = findViewById(R.id.lengoaia)
+        fondoKotxea = findViewById(R.id.kotxea2)
 
         //listenerrak ezarri datubasearen funtziorako
         savefileBat.setOnClickListener {
@@ -96,7 +108,7 @@ class MainActivity : AppCompatActivity() {
         musika?.start()
         musika?.isLooping = true
 
-
+        timer.schedule(task, 50, 50)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -203,7 +215,20 @@ class MainActivity : AppCompatActivity() {
                             }
                             check++
                         }
-
+                        var o = 3
+                        while(o>puntuazio.count()){
+                            val textua: String = if (lengua==0) {
+                                "Ez dira partida honen datuak aurkitu"
+                            }else{
+                                "No se han encontrado datos de esta partida"
+                            }
+                            when(o){
+                                1->saveTextBat.text = textua
+                                2->saveTextBi.text = textua
+                                3->saveTextHiru.text = textua
+                            }
+                            o--
+                        }
                     }
                 }
             }
@@ -217,5 +242,70 @@ class MainActivity : AppCompatActivity() {
         val switchActivityIntent = Intent(this, Menu::class.java)
         switchActivityIntent.putExtra("savefile",savefile)
         startActivity(switchActivityIntent)
+    }
+    val task = object : TimerTask() {
+        override fun run() {
+                mugitu()
+        }
+    }
+
+    fun mugitu (){
+        runOnUiThread {
+            if(!checker) {
+                zenbat = (1..4).random()
+                non = (1..2).random()
+                altura = (-100..1000).random()
+                val params = fondoKotxea.layoutParams as ConstraintLayout.LayoutParams
+
+                when (zenbat) {
+
+                    1 -> fondoKotxea.setImageResource(R.drawable.kotxea)
+                    2 -> fondoKotxea.setImageResource(R.drawable.kotxea2)
+                    3 -> fondoKotxea.setImageResource(R.drawable.kotxea3)
+                    4 -> fondoKotxea.setImageResource(R.drawable.kotxea4)
+                }
+                params.topMargin = altura
+                when (non) {
+
+                    1 -> {
+                        params.leftMargin = -2000
+                        fondoKotxea.rotation = 90F
+                        fondoKotxea.layoutParams = params
+                        }
+
+
+                    2 -> {
+                        params.leftMargin = 2900
+                        fondoKotxea.rotation = 270F
+                        fondoKotxea.layoutParams = params
+                    }
+
+                }
+                checker = true
+            }else {
+                val params = fondoKotxea.layoutParams as ConstraintLayout.LayoutParams
+                when (non) {
+
+                    1 -> {
+                        if (params.leftMargin > 2900) {
+                        checker = false
+                        }else{
+                            params.leftMargin += 40
+                            fondoKotxea.layoutParams = params
+                        }
+                    }
+
+
+                    2 -> {
+                        if (params.leftMargin < -2000) {
+                            checker = false
+                        }else{
+                            params.leftMargin -= 40
+                            fondoKotxea.layoutParams = params
+                        }
+                    }
+                }
+            }
+        }
     }
 }
